@@ -15,11 +15,11 @@ frontend:
   service:
     port: 80
   ingress:
-    host: YOUR_STUDENT_HOSTNAME.students-projects.ru # Корректный домен будет указан в задании
+    host: hegelianer.students-projects.ru # Корректный домен будет указан в задании
     path: /
     pathType: Prefix
   containerPort: 80
-  image: YOUR_DOCKERHUB/sausage-frontend:latest
+  image: hegelianer/sausage-frontend:latest
   resources:
     requests:
       memory: "128Mi"
@@ -45,8 +45,11 @@ backend:
   revisionHistoryLimit: 15
   replicas: 1
   strategy:
-  ### Опишите стратегию RollingUpdate для бэкенда
-  image: YOUR_DOCKERHUB/sausage-backend:latest
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  image: hegelianer/sausage-backend:latest
   imagePullPolicy: Always
   resources:
     requests:
@@ -57,20 +60,62 @@ backend:
       cpu: "1"
   containerPort: 8080
   livenessProbe:
-  ### Опишите LivenessProbe для бэкенда
+    httpGet:
+      path: /actuator/health
+      port: 8080
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3  
   vpa:
-  ### Опишите VPA для бэкенда
+    enabled: true
+    mode: "RecommendationOnly"
 
-backend-report:
+
 ### Опишите значения для backend-report
 ### Приложение должно использовать стратегию Recreate
 ### Приложение использует переменную PORT - порт, на котором оно запустится и DB - Uri-подключение к mongodb. 
 ### DB положите в Secret, PORT в ConfigMap
 ### Опишите HPA для backend-report
+backend-report:
+  replicas: 1
+  strategy:
+    type: Recreate
+  service:
+    port: 8081
+  env:
+    PORT: "8081"
+    DB: "mongodb://root:rootpassword@mongodb:27017/sausage_reports?authSource=admin"
+  image: hegelianer/sausage-backend-report:latest
+  imagePullPolicy: Always
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+  hpa:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+    cpuThreshold: 50
 
 infra:
   postgresql:
-  ### Опишите необходимые переменные для развертывания PostgresQL в кластере Kubernetes
+    image: "postgres:15"
+    dbName: "sausage_store"
+    user: "sausages_user"
+    password: "sausages_password"
+    port: 5432
+    storage: "1Gi"
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
   mongodb:
     env:
       MONGO_INITDB_ROOT_USERNAME: root
