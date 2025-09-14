@@ -1,0 +1,108 @@
+---
+# ConfigMap для PORT
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-backend-report-config
+  namespace: {{ .Release.Namespace }}
+data:
+  PORT: "{{ .Values.env.PORT }}"
+
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-backend-report
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: backend-report
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    app.kubernetes.io/component: backend-report
+    app.kubernetes.io/part-of: sausage-store
+spec:
+  replicas: {{ .Values.replicas }}
+  strategy:
+    type: {{ .Values.strategy.type }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-backend-report
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-backend-report
+    spec:
+      containers:
+        - name: backend-report
+          image: "{{ .Values.image }}"
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          env:
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-backend-report-config
+                  key: PORT
+            - name: DB
+              value: "{{ .Values.env.DB }}"
+          resources:
+            requests:
+              memory: {{ .Values.resources.requests.memory }}
+              cpu: {{ .Values.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.resources.limits.memory }}
+              cpu: {{ .Values.resources.limits.cpu }}
+
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-backend-report-service
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: backend-report-service
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: service
+    app.kubernetes.io/part-of: sausage-store
+spec:
+  selector:
+    app: {{ .Release.Name }}-backend-report
+  ports:
+    - protocol: TCP
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
+  type: ClusterIP
+
+---
+# HorizontalPodAutoscaler (HPA)
+{{- if .Values.hpa.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}-backend-report-hpa
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: backend-report-hpa
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: hpa
+    app.kubernetes.io/part-of: sausage-store
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Release.Name }}-backend-report
+  minReplicas: {{ .Values.hpa.minReplicas }}
+  maxReplicas: {{ .Values.hpa.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.hpa.cpuThreshold }}
+{{- end }}

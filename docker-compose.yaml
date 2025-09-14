@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14
+    container_name: sausage-postgres
+    environment:
+      POSTGRES_DB: sausage_store
+      POSTGRES_USER: sausage_user
+      POSTGRES_PASSWORD: sausage_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/src/main/resources/db/migration:/flyway/sql  # миграции Flyway
+    networks:
+      - sausage-net
+
+  mongodb:
+    image: mongo:5.0
+    container_name: sausage-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin_pass
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - sausage-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        VERSION: 1.0.0
+    container_name: sausage-backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sausage_store
+      SPRING_DATASOURCE_USERNAME: sausage_user
+      SPRING_DATASOURCE_PASSWORD: sausage_pass
+      SPRING_DATA_MONGODB_URI: mongodb://admin:admin_pass@mongodb:27017/report_db?authSource=admin
+    depends_on:
+      - postgres
+      - mongodb
+    networks:
+      - sausage-net
+
+  backend-report:
+    build:
+      context: ./backend-report
+      dockerfile: Dockerfile
+    container_name: sausage-report
+    ports:
+      - "8081:8080"
+    environment:
+      PORT: 8080
+      DB: mongodb://admin:admin_pass@mongodb:27017/report_db?authSource=admin
+    depends_on:
+      - mongodb
+    networks:
+      - sausage-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sausage-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - sausage-net
+
+volumes:
+  postgres_data:
+  mongo_data:
+
+networks:
+  sausage-net:
+    driver: bridge

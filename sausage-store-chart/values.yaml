@@ -1,13 +1,12 @@
 global:
   imagePullPolicy: Always
-  ###vault:
-  ###  host: ip
-  ###  name: vault
-  ###  vaultToken: someToken
+  vault:
+   host: ip
+   name: vault
+   vaultToken: someToken
 
 
 frontend:
-### В чарте frontend отсутствуют некоторые важные файлы. Поймите какие и опишите их.
   replicas: 1
   revisionHistoryLimit: 15
   strategy:
@@ -15,7 +14,7 @@ frontend:
   service:
     port: 80
   ingress:
-    host: hegelianer.students-projects.ru # Корректный домен будет указан в задании
+    host: hegelianer.2sem.students-projects.ru # Корректный домен будет указан в задании
     path: /
     pathType: Prefix
   containerPort: 80
@@ -35,11 +34,15 @@ backend:
     port: "8080"
     scrape: "true"
   env:
-    postgresUri: jdbc:postgresql://postgresql:5432/sausage-store
-    postgresUser: store
-    postgresPassword: storepassword
+    postgresUri: jdbc:postgresql://postgres:5432/sausage_store
+    postgresUser: sausages_user
+    postgresPassword: sausages_password
     reportPath: /logs/reports
     logPath: /logs
+    SPRING_CLOUD_VAULT_ENABLED: "false"
+    SPRING_CLOUD_VAULT_HOST: "none.invalid"
+    SPRING_CLOUD_VAULT_PORT: "8200"
+    SPRING_CLOUD_VAULT_TOKEN: "dummy"
   service:
     port: 8080
   revisionHistoryLimit: 15
@@ -49,7 +52,7 @@ backend:
     rollingUpdate:
       maxUnavailable: 1
       maxSurge: 1
-  image: hegelianer/sausage-backend:latest
+  image: hegelianer/sausage-backend:1.0.1
   imagePullPolicy: Always
   resources:
     requests:
@@ -63,14 +66,27 @@ backend:
     httpGet:
       path: /actuator/health
       port: 8080
-    initialDelaySeconds: 60
+    initialDelaySeconds: 90
     periodSeconds: 10
     timeoutSeconds: 5
     failureThreshold: 3  
   vpa:
     enabled: true
     mode: "RecommendationOnly"
-
+    updatePolicy:
+      updateMode: "Off"
+    resourcePolicy:
+      containerPolicies:
+        - containerName: "*"
+          minAllowed:
+            cpu: 50m
+            memory: 128Mi
+          maxAllowed:
+            cpu: 500m
+            memory: 256Mi
+          controlledResources:
+            - cpu
+            - memory
 
 ### Опишите значения для backend-report
 ### Приложение должно использовать стратегию Recreate
@@ -102,22 +118,15 @@ backend-report:
     cpuThreshold: 50
 
 infra:
-  postgresql:
-    image: "postgres:15"
-    dbName: "sausage_store"
-    user: "sausages_user"
-    password: "sausages_password"
-    port: 5432
-    storage: "1Gi"
-    resources:
-      requests:
-        memory: "256Mi"
-        cpu: "250m"
-      limits:
-        memory: "512Mi"
-        cpu: "500m"
+  postgres:
+    env:
+      PGSQL_USERNAME: sausages_user
+      PGSQL_PASSWORD: sausages_password
+      PGSQL_DB: sausage_store
+    containerPort: 5432
   mongodb:
     env:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: rootpassword
+      MONGO_INITDB_DATABASE: sausage_reports
     containerPort: 27017

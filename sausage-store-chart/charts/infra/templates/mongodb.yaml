@@ -29,6 +29,7 @@ spec:
             cpu: "50m"
           limits:
             memory: "256Mi"
+            cpu: "250m"
         volumeMounts:
         - name: mongodb-data
           mountPath: /data/db
@@ -62,3 +63,4 @@ metadata:
 data:
   MONGO_INITDB_ROOT_USERNAME: {{ .Values.mongodb.env.MONGO_INITDB_ROOT_USERNAME }}
   MONGO_INITDB_ROOT_PASSWORD: {{ .Values.mongodb.env.MONGO_INITDB_ROOT_PASSWORD }}
+  MONGO_INITDB_DATABASE: {{ .Values.mongodb.env.MONGO_INITDB_DATABASE }}

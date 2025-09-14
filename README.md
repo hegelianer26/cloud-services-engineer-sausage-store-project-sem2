@@ -34,3 +34,13 @@ sudo http-server ./dist/frontend/ -p 80 --proxy http://localhost:8080
 ```
 
 Then open your browser and go to [http://localhost](http://localhost)
+
+
+
+docker run --rm -p 8080:8080 \
+  -e SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:5432/sausage_store" \
+  -e SPRING_DATASOURCE_USERNAME=sausages_user \
+  -e SPRING_DATASOURCE_PASSWORD=sausages_password \
+  -e REPORT_PATH=/logs/reports \
+  -e LOG_PATH=/logs \
+  hegelianer/sausage-backend:fixed

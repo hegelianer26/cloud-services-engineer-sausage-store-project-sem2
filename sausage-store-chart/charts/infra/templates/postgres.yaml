@@ -1,34 +1,11 @@
-# postgresql-pvc.yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: postgres-pvc
-  namespace: {{ .Release.Namespace }}
-  labels:
-    app.kubernetes.io/name: postgres-pvc
-    app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/component: pvc
-    app.kubernetes.io/part-of: sausage-store
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: {{ .Values.postgresql.storage }}
-  storageClassName: default
----
-# postgresql-deployment.yaml
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: postgres
-  namespace: {{ .Release.Namespace }}
-  labels:
-    app.kubernetes.io/name: postgres
-    app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/component: database
-    app.kubernetes.io/part-of: sausage-store
+  annotations:
+    helm.sh/hook-weight: "-5"
 spec:
+  serviceName: postgres
   replicas: 1
   selector:
     matchLabels:
@@ -39,43 +16,51 @@ spec:
         app: postgres
     spec:
       containers:
-        - name: postgres
-          image: "{{ .Values.postgresql.image }}"
-          ports:
-            - containerPort: {{ .Values.postgresql.port }}
-          env:
-            - name: POSTGRES_DB
-              value: "{{ .Values.postgresql.dbName }}"
-            - name: POSTGRES_USER
-              value: "{{ .Values.postgresql.user }}"
-            - name: POSTGRES_PASSWORD
-              value: "{{ .Values.postgresql.password }}"
-          volumeMounts:
-            - name: postgres-storage
-              mountPath: /var/lib/postgresql/data
-          resources:
-            {{- toYaml .Values.postgresql.resources | nindent 12 }}
-      volumes:
-        - name: postgres-storage
-          persistentVolumeClaim:
-            claimName: postgres-pvc
+      - name: postgres
+        image: postgres:15
+        envFrom:
+          - configMapRef:
+              name: postgres-conf
+        ports:
+        - containerPort: {{ .Values.postgres.containerPort }}
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
 ---
-# postgresql-service.yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: postgres
-  namespace: {{ .Release.Namespace }}
   labels:
-    app.kubernetes.io/name: postgres
-    app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/component: service
-    app.kubernetes.io/part-of: sausage-store
+    app: postgres
 spec:
+  ports:
+  - port: {{ .Values.postgres.containerPort }}
+    targetPort: {{ .Values.postgres.containerPort }}
   selector:
     app: postgres
-  ports:
-    - protocol: TCP
-      port: 5432
-      targetPort: {{ .Values.postgresql.port }}
-  type: ClusterIP
+  clusterIP: None
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-conf
+data:
+  POSTGRES_USER: {{ .Values.postgres.env.PGSQL_USERNAME }}
+  POSTGRES_PASSWORD: {{ .Values.postgres.env.PGSQL_PASSWORD }}
+  POSTGRES_DB: {{ .Values.postgres.env.PGSQL_DB }}
