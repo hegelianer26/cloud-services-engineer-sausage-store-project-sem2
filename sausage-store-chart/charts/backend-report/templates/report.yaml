@@ -39,6 +39,7 @@ spec:
         - name: backend-report
           image: "{{ .Values.image }}"
           imagePullPolicy: {{ .Values.imagePullPolicy }}
+          command: ["./main"] 
           ports:
             - containerPort: {{ .Values.service.port }}
           env:

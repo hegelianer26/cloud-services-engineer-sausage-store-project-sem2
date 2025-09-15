@@ -102,7 +102,7 @@ backend-report:
   env:
     PORT: "8081"
     DB: "mongodb://root:rootpassword@mongodb:27017/sausage_reports?authSource=admin"
-  image: hegelianer/sausage-backend-report:latest
+  image: hegelianer/sausage-backend-report:1.0.1
   imagePullPolicy: Always
   resources:
     requests:
