@@ -94,10 +94,11 @@ jobs:
             helm package .
             mv sausage-store-*.tgz ../     
 
-        - name: Push Chart to Nexus using helm cm-push
+        - name: Push Helm Chart
           run: |
-            # Используем helm cm-push с явными credentials
-            helm cm-push sausage-store-*.tgz nexus \
+            helm package sausage-store-chart/
+            helm cm-push sausage-store-*.tgz "$NEXUS_HELM_REPO" \
+              --context-path="/repository/sausage-store-art" \
               --username="$NEXUS_HELM_REPO_USER" \
               --password="$NEXUS_HELM_REPO_PASSWORD"
 
