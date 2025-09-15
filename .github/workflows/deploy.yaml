@@ -78,11 +78,9 @@ jobs:
           with:
             version: v3.12.0
 
-        - name: Package Helm Chart
+        - name: Install helm cm-push plugin
           run: |
-            cd sausage-store-chart
-            helm package .
-            mv sausage-store-*.tgz ../
+            helm plugin install https://github.com/chartmuseum/helm-push.git
 
         - name: Add Nexus Helm Repository
           run: |
@@ -90,12 +88,18 @@ jobs:
               --username "$NEXUS_HELM_REPO_USER" \
               --password "$NEXUS_HELM_REPO_PASSWORD"
 
-        - name: Upload Chart to Nexus via curl
+        - name: Package Helm Chart
           run: |
-            echo "Uploading chart to $NEXUS_HELM_REPO"
-            curl -u "$NEXUS_HELM_REPO_USER:$NEXUS_HELM_REPO_PASSWORD" \
-                --data-binary "@sausage-store-*.tgz" \
-                "$NEXUS_HELM_REPO"
+            cd sausage-store-chart
+            helm package .
+            mv sausage-store-*.tgz ../     
+
+        - name: Push Chart to Nexus using helm cm-push
+          run: |
+            # Используем helm cm-push с явными credentials
+            helm cm-push sausage-store-*.tgz nexus \
+              --username="$NEXUS_HELM_REPO_USER" \
+              --password="$NEXUS_HELM_REPO_PASSWORD"
 
   # Деплоим приложения в кластер Kubernetes с помощью helm-чарт
   # deploy_helm_chart_to_kubernetes:
