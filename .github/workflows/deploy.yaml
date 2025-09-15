@@ -95,9 +95,9 @@ jobs:
             helm push sausage-store-*.tgz nexus
 
   # Деплоим приложения в кластер Kubernetes с помощью helm-чарт
-  deploy_helm_chart_to_kubernetes:
-      name: Deploy Helm Chart To Kubernetes
-      runs-on: ubuntu-latest
-      needs: add_helm_chart_to_nexus
+  # deploy_helm_chart_to_kubernetes:
+  #     name: Deploy Helm Chart To Kubernetes
+  #     runs-on: ubuntu-latest
+  #     needs: add_helm_chart_to_nexus
 
-      steps:
+  #     steps:
