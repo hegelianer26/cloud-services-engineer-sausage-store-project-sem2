@@ -8,15 +8,17 @@ https://hegelianer.2sem.students-projects.ru/
 
 
 ## Pods:
+```
 NAME                                          READY   STATUS    RESTARTS   AGE
-mongodb-0                                     1/1     Running   0          23h
-postgres-0                                    1/1     Running   0          23h
-sem-project-backend-7bd9bcd89-t7grt           1/1     Running   0          43s
-sem-project-backend-report-79d6dc5cdc-72gg7   1/1     Running   0          23h
-sem-project-frontend-bd49d948d-tznrd          1/1     Running   0          23h
-
+mongodb-0                                     1/1     Running   0          24h
+postgres-0                                    1/1     Running   0          24h
+sem-project-backend-6b8bbcd7ff-mhwns          1/1     Running   0          9m19s
+sem-project-backend-report-79d6dc5cdc-72gg7   1/1     Running   0          24h
+sem-project-frontend-bd49d948d-tznrd          1/1     Running   0          24h
+```
 
 ## VPA (рекомендации для backend):
+```
 Name:         sem-project-backend-vpa
 Namespace:    r-devops-magistracy-project-2sem-816697651
 Labels:       app.kubernetes.io/managed-by=Helm
@@ -69,9 +71,10 @@ Status:
         Cpu:     500m
         Memory:  256Mi
 Events:          <none>
-
+```
 
 ## HPA (автоскейлинг для backend-report):
+```
 Name:                                                  sem-project-backend-report-hpa
 Namespace:                                             r-devops-magistracy-project-2sem-816697651
 Labels:                                                app.kubernetes.io/component=hpa
@@ -95,3 +98,4 @@ Conditions:
   ScalingActive   True    ValidMetricFound    the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
   ScalingLimited  False   DesiredWithinRange  the desired count is within the acceptable range
 Events:           <none>
+```
