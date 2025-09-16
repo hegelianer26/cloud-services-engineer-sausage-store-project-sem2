@@ -92,7 +92,6 @@ jobs:
 
         - name: Push Helm Chart
           run: |
-            helm package sausage-store-chart/
             helm cm-push sausage-store-*.tgz "$NEXUS_HELM_REPO" \
               --context-path="/repository/sausage-store-art" \
               --username="$NEXUS_HELM_REPO_USER" \
@@ -131,7 +130,6 @@ jobs:
           helm upgrade --install sausage-store nexus/sausage-store \
             --namespace ${{ env.SAUSAGE_STORE_NAMESPACE }} \
             --create-namespace \
-            --set global.vault.vaultToken=${{ env.VAULT_TOKEN }} \
             --wait \
             --timeout 10m
 
