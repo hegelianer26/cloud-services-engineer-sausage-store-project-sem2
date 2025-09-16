@@ -49,7 +49,7 @@ backend:
     rollingUpdate:
       maxUnavailable: 1
       maxSurge: 1
-  image: hegelianer/sausage-backend:1.0.3
+  image: hegelianer/sausage-backend:latest
   imagePullPolicy: Always
   resources:
     requests:
