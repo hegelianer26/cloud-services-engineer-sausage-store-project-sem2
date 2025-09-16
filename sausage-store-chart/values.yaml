@@ -39,9 +39,7 @@ backend:
     postgresPassword: sausages_password
     reportPath: /logs/reports
     logPath: /logs
-    SPRING_CLOUD_VAULT_ENABLED: "false"
-    SPRING_CLOUD_VAULT_HOST: "none.invalid"
-    SPRING_CLOUD_VAULT_PORT: "8200"
+    SPRING_DATA_MONGODB_URI: "mongodb://root:rootpassword@mongodb:27017/sausage_reports?authSource=admin"
   service:
     port: 8080
   revisionHistoryLimit: 15

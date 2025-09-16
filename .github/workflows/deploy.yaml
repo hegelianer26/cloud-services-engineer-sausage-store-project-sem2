@@ -125,13 +125,12 @@ jobs:
             --password "$NEXUS_HELM_REPO_PASSWORD"
           helm repo update
 
+          
       - name: Upgrade Helm release
         run: |
-          helm upgrade --install sausage-store nexus/sausage-store \
+          helm upgrade --install sem-project nexus/sausage-store \
             --namespace ${{ env.SAUSAGE_STORE_NAMESPACE }} \
             --create-namespace \
             --wait \
             --timeout 10m
-
-
     
