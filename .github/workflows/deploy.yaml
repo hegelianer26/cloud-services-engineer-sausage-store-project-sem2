@@ -93,7 +93,7 @@ jobs:
         - name: Push Helm Chart
           run: |
             helm cm-push sausage-store-*.tgz "$NEXUS_HELM_REPO" \
-              --context-path="/repository/sausage-store-art" \
+              --context-path="/repository/hegelianer" \
               --username="$NEXUS_HELM_REPO_USER" \
               --password="$NEXUS_HELM_REPO_PASSWORD"
 
@@ -125,7 +125,7 @@ jobs:
             --password "$NEXUS_HELM_REPO_PASSWORD"
           helm repo update
 
-          
+
       - name: Upgrade Helm release
         run: |
           helm upgrade --install sem-project nexus/sausage-store \
